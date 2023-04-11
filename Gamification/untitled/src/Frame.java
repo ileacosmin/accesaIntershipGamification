@@ -2,19 +2,19 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.module.FindException;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
 
 public class Frame{
     private JTextField tf1,tf2,tf3;
     private JButton b1,b2;
-    private JFrame f= new JFrame();
+    private JFrame f= new JFrame("LOGIN PAGE");
     private JFrame f2 = new JFrame();
     private Game G;
-   // private int i;
-    private boolean nextquestion=true;
-    private boolean buttonPressed;
     public Frame(Game Ga) {
         this.G=Ga;
+
         JLabel jlabel = new JLabel("Please enter the username: ");
         jlabel.setBounds(10,-40,200,100);
         jlabel.setOpaque(true);
@@ -36,12 +36,12 @@ public class Frame{
         f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     }
 
-
     public void Frame2() {
 
-        JFrame frame2 = new JFrame("My Second Frame");
+        JFrame frame2 = new JFrame("Gamification");
         frame2.setSize(600, 200);
         frame2.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
         // Create a panel to hold components
         JPanel panel2 = new JPanel();
 
@@ -61,49 +61,53 @@ public class Frame{
             @Override
             public void actionPerformed(ActionEvent e) {
                 //check the answer
-                String ansewer= textField2.getText();
+                String answer = textField2.getText();
 
-                if(G.checkAnswer(0,ansewer)) {
-                    System.out.println("COrrect");
-                    Player player=G.getPlayerByName(tf1.getText());
-                    int nrtokens =player.getTokens();
-                    nrtokens++;
-                    player.setTokens(nrtokens);
+                if(G.checkAnswer(0, answer)) {
+                    System.out.println("Correct");
+
+                    // Increase the player's token count
+                    Player player = G.getPlayerByName(tf1.getText());
+                    int nrTokens = player.getTokens() + 1;
+                    player.setTokens(nrTokens);
                     G.updatePlayer(player, tf1.getText());
-                    String nextString = G.getQuests().get(0);
-                    String nextAnswer = G.getAnswers().remove(0);
-                    G.getAnswers().add(nextAnswer);
-                    G.getQuests().add(nextString);
-                    // Update the label with the next string
-                    System.out.println("Next string is: " + nextString);
 
-                    G.showPlayers();
-                    // Get the next string from the list
-                    label2.setText(nextString);
-                    G.getQuests().remove(0);
-                }else {
-                    System.out.println("incorrect");
+                    // Move the current question to the back of the list
+                    String currentQuestion = G.getQuests().remove(0);
+                    G.getQuests().add(currentQuestion);
+                    String currentAnswer = G.getAnswers().remove(0);
+                    G.getAnswers().add(currentAnswer);
+
+                    // Update the label with the next string
+                    label2.setText(G.getQuests().get(0));
+
+                   // G.showPlayers();
+                } else {
+                    System.out.println("Incorrect");
+                    System.out.println(G.GetAnswerByIndex(0));
                 }
             }
         });
+
         // Add a skip button
         JButton skipButton2 = new JButton("Skip");
         panel2.add(skipButton2);
-
         skipButton2.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Get the next string from the list
-
-                String nextString = G.getQuests().remove(0);
-                G.getQuests().add(nextString);
+                // Move the current question to the back of the list
+                String currentQuestion = G.getQuests().remove(0);
+                G.getQuests().add(currentQuestion);
+                String currentAnswer = G.getAnswers().remove(0);
+                G.getAnswers().add(currentAnswer);
 
                 // Update the label with the next string
-                label2.setText(nextString);
+                label2.setText(G.getQuests().get(0));
             }
         });
-        // Add a skip button
-        JButton leaderboardButton = new JButton("leaderboard");
+
+        // Add a leaderboard button
+        JButton leaderboardButton = new JButton("Leaderboard");
         panel2.add(leaderboardButton);
         leaderboardButton.addActionListener(new ActionListener() {
             @Override
@@ -111,15 +115,21 @@ public class Frame{
                 Frame3();
             }
         });
+
         // Add the panel to the frame
         frame2.add(panel2);
 
         // Set the frame to be visible
         frame2.setVisible(true);
 
-
-
-        }
+        frame2.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                System.out.println("fereastra inchisa");
+                G.writeBinaryData("data.bin", G.getPlayers(), G.getQuests(), G.getAnswers());
+            }
+        });
+    }
     public void Frame3(){
         G.sortPlayersByTokens();
         JFrame frame3 = new JFrame("Leaderboard");
